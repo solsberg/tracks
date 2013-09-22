@@ -3,7 +3,7 @@
 
 class TagCloud
   attr_reader :user
-  attr_reader :tags, :min, :divisor
+  attr_reader :min, :divisor
   attr_reader :tags_90days, :min_90days, :divisor_90days
 
   def initialize (user, cut_off=nil)
@@ -11,18 +11,9 @@ class TagCloud
     @cut_off = cut_off
   end
 
-  # TODO: parameterize limit
   def compute
-    levels=10
-
-    params = [sql(@cut_off), user.id]
-    if @cut_off
-      params += [@cut_off, @cut_off]
-    end
-    @tags = Tag.find_by_sql(params).sort_by { |tag| tag.name.downcase }
-
     max, @min = 0, 0
-    @tags.each { |t|
+    tags.each { |t|
       max = [t.count.to_i, max].max
       @min = [t.count.to_i, @min].min
     }
@@ -30,8 +21,19 @@ class TagCloud
     @divisor = ((max - @min) / levels) + 1
   end
 
+  def tags
+    unless @tags
+      params = [sql(@cut_off), user.id]
+      if @cut_off
+        params += [@cut_off, @cut_off]
+      end
+      @tags = Tag.find_by_sql(params).sort_by { |tag| tag.name.downcase }
+    end
+    @tags
+  end
 private
 
+  # TODO: parameterize limit
   def sql(cut_off = nil)
     query = "SELECT tags.id, tags.name AS name, count(*) AS count"
     query << " FROM taggings, tags, todos"
@@ -46,5 +48,9 @@ private
     query << " GROUP BY tags.id, tags.name"
     query << " ORDER BY count DESC, name"
     query << " LIMIT 100"
+  end
+
+  def levels
+    10
   end
 end
