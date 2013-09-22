@@ -21,12 +21,8 @@ class TagCloud
     @tags
   end
 
-  def min
-    0
-  end
-
-  def divisor
-    ((max - min) / levels) + 1
+  def relative_size(tag)
+    (tag.count.to_i-min)/divisor
   end
 private
 
@@ -45,6 +41,14 @@ private
     query << " GROUP BY tags.id, tags.name"
     query << " ORDER BY count DESC, name"
     query << " LIMIT 100"
+  end
+
+  def min
+    0
+  end
+
+  def divisor
+    ((max - min) / levels) + 1
   end
 
   def tag_counts
