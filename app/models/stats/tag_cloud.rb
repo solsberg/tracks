@@ -3,22 +3,11 @@
 
 class TagCloud
   attr_reader :user
-  attr_reader :min, :divisor
   attr_reader :tags_90days, :min_90days, :divisor_90days
 
   def initialize (user, cut_off=nil)
     @user = user
     @cut_off = cut_off
-  end
-
-  def compute
-    max, @min = 0, 0
-    tags.each { |t|
-      max = [t.count.to_i, max].max
-      @min = [t.count.to_i, @min].min
-    }
-
-    @divisor = ((max - @min) / levels) + 1
   end
 
   def tags
@@ -30,6 +19,14 @@ class TagCloud
       @tags = Tag.find_by_sql(params).sort_by { |tag| tag.name.downcase }
     end
     @tags
+  end
+
+  def min
+    0
+  end
+
+  def divisor
+    ((max - min) / levels) + 1
   end
 private
 
@@ -48,6 +45,14 @@ private
     query << " GROUP BY tags.id, tags.name"
     query << " ORDER BY count DESC, name"
     query << " LIMIT 100"
+  end
+
+  def tag_counts
+    tags.map{|t| t.count.to_i}
+  end
+
+  def max
+    tag_counts.max
   end
 
   def levels
